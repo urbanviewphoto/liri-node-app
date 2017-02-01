@@ -10,6 +10,7 @@ var object  = process.argv[3];
 // First load the fileservice npm to load our Twitter Keys  
 var fs = require('fs');
 var keys = require('./keys.js');
+//console.log(twitterKeys.consumer_key); 
 // for (var key in keys.twitterKeys){
 // 	console.log(keys.twitterKeys[key]); 
 // }
@@ -20,8 +21,8 @@ var request = require("request");
 // Load the table npm for Spotify, etc. 
 var Table = require('cli-table');
 
-// Load the Spotify npm to playback any requested song
-var spotify = require("spotify");
+// Load the Twitter request npm for Twitter access
+var Twitter = require('twitter');
 
 // Process the command line arguments:
 //		do-what-it-says		do the requested action
@@ -47,7 +48,44 @@ function do_action(command, object) {
 			});
 	        break;
 	    case 'my-tweets':
-	        //code block
+
+			var tweetID   = '';
+			var tweetDate = ''; 
+			var tweetText = '';
+			var tweetUrls = []; 
+			var tweetUrl  = '';
+
+			var table = new Table({
+	    		  head: 	 ['ID','Date','URL','Text'] 
+	  			, colWidths: [20, 32, 32, 62]
+			});	    
+			var client = new Twitter(keys.twitterKeys); 			 
+			var params = {screen_name: 'urbanviewphoto'};
+			client.get('statuses/user_timeline', params, function(error, tweets, response) {
+				if (!error) {
+					console.log('');
+					fs.appendFile('log.txt', '\n'); 
+	    			console.log(command); 
+	    			fs.appendFile('log.txt', command + '\n'); 					
+					for (var i=0; i<tweets.length; i++){
+						 tweet = tweets[i];
+						 tweetID   = tweet.id;
+						 tweetDate = tweet.created_at;
+						 tweetText = tweet.text;						 
+						 tweetUrls = tweet.entities.urls; 
+						 if (tweetUrls.length>0)
+						 	tweetUrl = tweetUrls[0].display_url;
+						 else 
+							tweetUrl = '';
+						 //console.log(pad(tweetText,62,'right'));
+						 table.push([tweetID,tweetDate,tweetUrl,
+						 			 pad(tweetText,62,'right')]);
+					}
+					console.log(table.toString());
+	    			fs.appendFile('log.txt', table.toString() + '\n');
+			  }
+			});
+
 	        break;
 	    case 'movie-this':
 	    	if (object == undefined) 
@@ -57,34 +95,48 @@ function do_action(command, object) {
 	    	request(queryUrl, function(error,response,body){
 	    		//console.log(JSON.parse(body));
 
-	    		console.log(''); 
-	    		fs.appendFile('log.txt', '\n');   		
-	    		console.log(command + ' ' + object); 
-	    		fs.appendFile('log.txt', command + ' ' + object + '\n');
-	    		console.log('-----------------------------------------------');
-	    		fs.appendFile('log.txt', '-----------------------------------------------\n');
-				console.log('Title:    ' + JSON.parse(body).Title);
-				fs.appendFile('log.txt', 'Title:    ' + JSON.parse(body).Title + '\n');
-				console.log('Year:     ' + JSON.parse(body).Year);
-				fs.appendFile('log.txt', 'Year:     ' + JSON.parse(body).Year + '\n');
-				console.log('Rated:    ' + JSON.parse(body).Rated);
-				fs.appendFile('log.txt', 'Rated:    ' + JSON.parse(body).Rated + '\n');
-				console.log('Country:  ' + JSON.parse(body).Country);
-				fs.appendFile('log.txt', 'Country:  ' + JSON.parse(body).Country + '\n');
-				console.log('Language: ' + JSON.parse(body).Language);
-				fs.appendFile('log.txt', 'Language: ' + JSON.parse(body).Language + '\n');
-				console.log('Director: ' + JSON.parse(body).Director);
-				fs.appendFile('log.txt', 'Director: ' + JSON.parse(body).Director + '\n');
-				console.log('Plot:     ' + JSON.parse(body).Plot);
-				fs.appendFile('log.txt', 'Plot:     ' + JSON.parse(body).Plot + '\n');
-				console.log('Actors:   ' + JSON.parse(body).Actors);
-				fs.appendFile('log.txt', 'Actors:   ' + JSON.parse(body).Actors) + '\n';
-				console.log('Rating:   ' + JSON.parse(body).imdbRating);
-				fs.appendFile('log.txt', 'Rating:   ' + JSON.parse(body).imdbRating + '\n');
-				console.log('Poster:   ' + JSON.parse(body).Poster);
-				fs.appendFile('log.txt', 'Poster:   ' + JSON.parse(body).Poster + '\n');
-	    		console.log('-----------------------------------------------');	
-	    		fs.appendFile('log.txt', '-----------------------------------------------\n');								
+				console.log(''); 
+		    	fs.appendFile('log.txt', '\n'); 
+		   		console.log(command + ' ' + object); 
+		    	fs.appendFile('log.txt', command + ' 		' + object + '\n');	
+
+				var table = new Table({
+		    		  head: 	 ['Movie Info',' '] 
+		  			, colWidths: [12, 102]
+				});	   
+
+				var mTitle    = JSON.parse(body).Title;
+				var mYear     = JSON.parse(body).Year;
+				var	mRated    = JSON.parse(body).Rated;
+				var mCountry  = JSON.parse(body).Country;
+				var mLanguage = JSON.parse(body).Language;
+				var mDirector = JSON.parse(body).Director;
+				var mPlot     = JSON.parse(body).Plot; 	
+				var mActors   = JSON.parse(body).Actors;
+				var mRating   = JSON.parse(body).imdbRating;
+				var mPoster   = JSON.parse(body).Poster;			       	    	 
+
+				table.push(['Title:    ',pad(mTitle,62,'right')]);
+				table.push(['Year:     ',pad(mYear,62,'right')]);
+				table.push(['Rated:    ',pad(mRated,62,'right')]);
+				table.push(['Country:  ',pad(mCountry,62,'right')]);
+				table.push(['Language: ',pad(mLanguage,62,'right')]);
+				table.push(['Director: ',pad(mDirector,62,'right')]);
+
+				var result = wordWrapToStringList(mPlot,60);
+				for (var i=0; i<result.length; i++){
+					if (i == 0)
+						var mLabel='Plot:     ';
+					else 
+						mLabel = '          ';
+					table.push([mLabel,result[i]]); 				
+				}
+
+				table.push(['Actors:   ',pad(mActors,62,'right')]);	
+				table.push(['Rating:   ',pad(mRating,62,'right')]);	
+				table.push(['Poster:   ',pad(mPoster,62,'right')]);	
+	    		console.log(table.toString());
+	    		fs.appendFile('log.txt', table.toString() + '\n');			
 			});
 	    	break;
 	    case 'spotify-this-song':
@@ -136,6 +188,40 @@ function do_action(command, object) {
 	    	break;
 	}
 }
+
+function pad(string,len,side){
+	if (string.length<len){
+		var spaces  = '';
+		var padding = len-string.length;
+		for (var i=0; i<padding; i++){
+			spaces+=' ';
+		}
+		if (side == 'right')
+			string+=spaces;
+		else 
+			string = spaces + string;	
+	}
+	return string; 
+}
+
+function wordWrapToStringList (text, maxLength) {
+	var result = [];
+    var line = [];
+    var length = 0;
+    text.split(" ").forEach(function(word) {
+        if ((length + word.length) >= maxLength) {
+            result.push(line.join(" "));
+            line = []; length = 0;
+        }
+        length += word.length + 1;
+        line.push(word);
+    });
+    if (line.length > 0) {
+        result.push(line.join(" "));
+    }
+    return result;
+};
+
 
 do_action(command, object); 
 
