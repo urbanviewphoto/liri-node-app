@@ -71,15 +71,23 @@ function do_action(command, object) {
 						 tweet = tweets[i];
 						 tweetID   = tweet.id;
 						 tweetDate = tweet.created_at;
-						 tweetText = tweet.text;						 
+						 tweetText = tweet.text;
 						 tweetUrls = tweet.entities.urls; 
 						 if (tweetUrls.length>0)
 						 	tweetUrl = tweetUrls[0].display_url;
 						 else 
 							tweetUrl = '';
 						 //console.log(pad(tweetText,62,'right'));
-						 table.push([tweetID,tweetDate,tweetUrl,
-						 			 pad(tweetText,62,'right')]);
+						 var result = wordWrapToStringList(tweetText,60);
+						 for (var j=0; j<result.length; j++){
+						 	if (j==0)
+						 		table.push([tweetID,tweetDate,tweetUrl,
+						 				    result[j]]);
+						 	else 
+						 		table.push([' ',' ',' ',result[j]]);		     					 	
+						 }						 
+						 // table.push([tweetID,tweetDate,tweetUrl,
+						 // 			 pad(tweetText,62,'right')]);
 					}
 					console.log(table.toString());
 	    			fs.appendFile('log.txt', table.toString() + '\n');
@@ -116,14 +124,14 @@ function do_action(command, object) {
 				var mRating   = JSON.parse(body).imdbRating;
 				var mPoster   = JSON.parse(body).Poster;			       	    	 
 
-				table.push(['Title:    ',pad(mTitle,62,'right')]);
-				table.push(['Year:     ',pad(mYear,62,'right')]);
-				table.push(['Rated:    ',pad(mRated,62,'right')]);
-				table.push(['Country:  ',pad(mCountry,62,'right')]);
-				table.push(['Language: ',pad(mLanguage,62,'right')]);
-				table.push(['Director: ',pad(mDirector,62,'right')]);
+				table.push(['Title:    ',pad(mTitle,100,'right')]);
+				table.push(['Year:     ',pad(mYear,100,'right')]);
+				table.push(['Rated:    ',pad(mRated,100,'right')]);
+				table.push(['Country:  ',pad(mCountry,100,'right')]);
+				table.push(['Language: ',pad(mLanguage,100,'right')]);
+				table.push(['Director: ',pad(mDirector,100,'right')]);
 
-				var result = wordWrapToStringList(mPlot,60);
+				var result = wordWrapToStringList(mPlot,100);
 				for (var i=0; i<result.length; i++){
 					if (i == 0)
 						var mLabel='Plot:     ';
@@ -132,9 +140,9 @@ function do_action(command, object) {
 					table.push([mLabel,result[i]]); 				
 				}
 
-				table.push(['Actors:   ',pad(mActors,62,'right')]);	
-				table.push(['Rating:   ',pad(mRating,62,'right')]);	
-				table.push(['Poster:   ',pad(mPoster,62,'right')]);	
+				table.push(['Actors:   ',pad(mActors,100,'right')]);	
+				table.push(['Rating:   ',pad(mRating,100,'right')]);				
+				table.push(['Poster:   ',pad(mPoster,100,'right')]);	
 	    		console.log(table.toString());
 	    		fs.appendFile('log.txt', table.toString() + '\n');			
 			});
@@ -175,12 +183,6 @@ function do_action(command, object) {
 	    			preview  = objItem.artists[0].external_urls.spotify;
 
 	    			table.push([song,album,artist,preview]); 
-
-	   				// console.log('Song:    ' + song);    			
-	    			// console.log('Album:   ' + album);
-	    			// console.log('Artist:  ' + artist);
-	    			// console.log('Preview: ' + preview);
-	    			// console.log(''); 
 	    		}
 	    		console.log(table.toString());
 	    		fs.appendFile('log.txt', table.toString() + '\n');
